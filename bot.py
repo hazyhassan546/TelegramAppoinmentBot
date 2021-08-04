@@ -3,7 +3,7 @@ from telegram.ext import *
 import os
 import responses as R
 from telegram import InlineKeyboardButton, InlineKeyboardMarkup, Update
-PORT = int(os.environ.get('PORT', 5000))
+PORT = int(os.environ.get('PORT', 8443))
 
 
 print("Bot started...")
