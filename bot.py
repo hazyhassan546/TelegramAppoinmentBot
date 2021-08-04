@@ -1,7 +1,9 @@
 import constants as keys
 from telegram.ext import *
+import os
 import responses as R
 from telegram import InlineKeyboardButton, InlineKeyboardMarkup, Update
+PORT = int(os.environ.get('PORT', 5000))
 
 
 print("Bot started...")
@@ -52,7 +54,10 @@ def main():
     dispatcher.add_handler(CallbackQueryHandler(button))
     dispatcher.add_handler(MessageHandler(Filters.text, handle_message))
     dispatcher.add_error_handler(error)
-    updater.start_polling(5)
+    updater.start_webhook(listen="0.0.0.0",
+                          port=int(PORT),
+                          url_path=keys.API_KEY)
+    updater.bot.setWebhook('https://gentle-cove-69794.herokuapp.com/' + keys.API_KEY)
     updater.idle()
 
 
