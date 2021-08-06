@@ -1,3 +1,4 @@
+import commandHandlers
 import constants as keys
 import commandHandlers as cmd_hanlers
 from telegram.ext import *
@@ -53,16 +54,20 @@ def main():
     dispatcher.add_handler(CommandHandler('help', help_command))
     dispatcher.add_handler(CommandHandler(keys.book_appointment, cmd_hanlers.book_appointment_handler))
     dispatcher.add_handler(CommandHandler(keys.getMyAppointment, cmd_hanlers.get_my_appointments_handler))
+    dispatcher.add_handler(CommandHandler('cancel', R.cancel_handler))
     dispatcher.add_handler(CallbackQueryHandler(button))
+    # update and delete appointments
+    dispatcher.add_handler(MessageHandler(Filters.regex("/"+keys.update_status+"[0-9]*"), commandHandlers.update_appointment_status))
+    dispatcher.add_handler(MessageHandler(Filters.regex("/"+keys.delete_appointment+"[0-9]*"), commandHandlers.delete_appointment))
     dispatcher.add_handler(MessageHandler(Filters.text, handle_message))
     dispatcher.add_error_handler(error)
 
-    updater.start_polling()    # For local run
-    # updater.start_webhook(listen="0.0.0.0",           # For Heroku run
-    #                       port=int(PORT),
-    #                       url_path=keys.API_KEY,
-    #                       webhook_url=('https://gentle-cove-69794.herokuapp.com/' + keys.API_KEY)
-    #                       )
+    # updater.start_polling()    # For local run
+    updater.start_webhook(listen="0.0.0.0",           # For Heroku run
+                          port=int(PORT),
+                          url_path=keys.API_KEY,
+                          webhook_url=('https://gentle-cove-69794.herokuapp.com/' + keys.API_KEY)
+                          )
     updater.idle()
 
 

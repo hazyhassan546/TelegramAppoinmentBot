@@ -21,7 +21,7 @@ def book_appointment_handler(update, context):
     )
     # now we will change user.lastCommand to new one.
     client.query(q.update(q.ref(q.collection("users"), user["ref"].id()), {"data": {"last_command": keys.getAppointmentTitle}}))
-    context.bot.send_message(chat_id=chat_id, text="Please enter the title of your appointment")
+    context.bot.send_message(chat_id=chat_id, text="Please enter the title of your appointment\nTo cancel booking use /cancel ")
 
 
 def get_appointment_start_date_handler(update, context):
@@ -90,14 +90,38 @@ def get_my_appointments_handler(update, context):
     reply_text = ""
     for i in appointments["data"]:
         appointment = client.query(q.get(q.ref(q.collection("appointments"), i.id())))
-        print(appointment)
         status = "Not Completed"
         if appointment["data"]["completed"]:
             status = "Completed"
-        reply_text = reply_text+"\n"+"Appointment title: "+appointment["data"]["title"]+"\n"+"Date: "+appointment["data"]["appointmentDate"]+"\n"+"Time: "+appointment["data"]["time_slot"]+"\n"+"Status: "+status+"\n\n"
+        reply_text = reply_text+"\n"+"Appointment title: "+appointment["data"]["title"]+"\n"+"Date: "+appointment["data"]["appointmentDate"]+"\n"+"Time: "+appointment["data"]["time_slot"]+"\n"+"Status: "+status+"\nUpdate Status: /updateStatus_"+i.id()+"\nDelete Appointment: /deleteAppointment_"+i.id()+"\n\n"
     if reply_text == "":
         reply_text = "You don't have any appointments saved, type /"+keys.book_appointment+" to schedule."
     else:
         reply_text = "Appointment List:\n" + reply_text
 
     update.message.reply_text(reply_text)
+
+
+def update_appointment_status(update, context):
+    chat_id = update.effective_chat.id
+    message = update.message.text
+    appointment_id = message.split("_")[1]
+    event = client.query(q.get(q.ref(q.collection("appointments"), appointment_id)))
+
+    if event["data"]["completed"]:
+        new_status = False
+
+    else:
+        new_status = True
+
+    client.query(q.update(q.ref(q.collection("appointments"), appointment_id), {"data": {"completed": new_status}}))
+    context.bot.send_message(chat_id=chat_id, text="Your appointment has been completed successfully.")
+
+
+def delete_appointment(update, context):
+    chat_id = update.effective_chat.id
+    message = update.message.text
+    appointment_id = message.split("_")[1]
+    client.query(q.delete(q.ref(q.collection("appointments"), appointment_id)))
+    context.bot.send_message(chat_id=chat_id, text="Your appointment has been deleted successfully.")
+

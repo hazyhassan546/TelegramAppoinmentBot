@@ -61,6 +61,28 @@ def button_response(input_text):
         return "To know more about Axios technologies visit https://axios.tech/"
 
 
+def cancel_handler(update, context):
+    reset_appointment()
+    # we can use chat_id to fetch user from db
+    chat_id = update.effective_chat.id
+    # now fetch user to change the last command parameter with which we can perform actions
+    user = client.query(
+        q.get(
+            q.match(
+                q.index("users"),
+                chat_id
+            )
+        )
+    )
+    # now we will change user.lastCommand to new one.
+    if user["data"]["last_command"] == "":
+        update.message.reply_text("You are doing nothing.")
+    else:
+        client.query(
+            q.update(q.ref(q.collection("users"), user["ref"].id()), {"data": {"last_command": ""}}))
+        update.message.reply_text("Canceled Successfully")
+
+
 def message_response(update, contex):
     user_message = update.message.text
     chat_id = update.effective_chat.id
@@ -73,12 +95,12 @@ def message_response(update, contex):
         set_appointment('title', user_message)
         # in below function we are just changing up last command for the user to get date.
         commandHandlers.get_appointment_start_date_handler(update, contex)
-        return "Please enter date of the appointment\nExample: 20/02/2021"
+        return "Please enter date of the appointment\nExample: 20/02/2021\nTo cancel booking use /cancel "
     if last_command == keys.getAppointmentDate:
         set_appointment('date', user_message)
         # in below function we are just changing up last command for the user to get date.
         commandHandlers.get_appointment_end_date_handler(update, contex)
-        return "Now please enter time of the appointment\nExample: 2:00pm,3:00pm"
+        return "Now please enter time of the appointment\nExample: 2:00pm,3:00pm\nTo cancel booking use /cancel "
     if last_command == keys.getAppointmentTime:
         set_appointment('time', user_message)
         # in below function we are just changing up last command for the user to get date.

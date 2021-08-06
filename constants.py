@@ -20,5 +20,8 @@ getAppointmentTime = "getAppointmentTime"
 # for fetching user appointments Action/cmd types
 getMyAppointment = "myAppointments"
 
+# update and delete appointments
+update_status = "updateStatus_"
+delete_appointment = "deleteAppointment_"
 
 
