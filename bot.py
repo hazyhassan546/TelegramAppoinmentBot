@@ -192,12 +192,12 @@ def main():
     dispatcher.add_handler(MessageHandler(Filters.text, handle_message))
     dispatcher.add_error_handler(error)
 
-    updater.start_polling()    # For local run
-    # updater.start_webhook(listen="0.0.0.0",           # For Heroku run
-    #                       port=int(PORT),
-    #                       url_path=keys.API_KEY,
-    #                       webhook_url=('https://gentle-cove-69794.herokuapp.com/' + keys.API_KEY)
-    #                       )
+    # updater.start_polling()    # For local run
+    updater.start_webhook(listen="0.0.0.0",           # For Heroku run
+                          port=int(PORT),
+                          url_path=keys.API_KEY,
+                          webhook_url=('https://gentle-cove-69794.herokuapp.com/' + keys.API_KEY)
+                          )
     updater.idle()
 
 
