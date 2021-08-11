@@ -1,11 +1,13 @@
 from datetime import datetime
-
 import commandHandlers
 import constants as keys
 from faunadb import query as q
 from faunadb.objects import Ref
 from faunadb.client import FaunaClient
+from telegram import InlineKeyboardButton, InlineKeyboardMarkup
 import pytz
+import pythoncalendar as telegramcalendar
+
 
 client = FaunaClient(secret=keys.FAUNA_API_KEY)
 print("Data base Connected")
@@ -30,6 +32,42 @@ def reset_appointment():
 def set_appointment(key, value):
     global appointmentData
     appointmentData[key] = value
+
+
+def set_date(update, context, date):
+    set_appointment('date', date)
+    commandHandlers.get_appointment_end_date_handler(update, context)
+
+
+def set_time(update, context, time):
+    set_appointment('time', time)
+    # save appointment to db
+    commandHandlers.submit_appointment_handler(update, context, appointmentData)
+    keyboard = [
+        [
+            InlineKeyboardButton("List My Appointment", callback_data=keys.getMyAppointment)
+        ],
+    ]
+    reply_markup = InlineKeyboardMarkup(keyboard)
+    update.callback_query.message.reply_text("Your Appointment is now submitted.", reply_markup=reply_markup)
+    return "Thanks for the information."
+
+
+def send_calendar(update, contex):
+    update.message.reply_text("Please select a date: ", reply_markup=telegramcalendar.create_calendar())
+
+
+def send_calendar_again(update, contex):
+    update.callback_query.message.reply_text("Please select a date: ", reply_markup=telegramcalendar.create_calendar())
+
+
+def check_slot_availability(data):
+    appointments = client.query(q.paginate(q.match(q.index("appointments_by_date"), commandHandlers.date_to_utc(appointmentData["date"]), data, False)))
+    print(appointments["data"])
+    if appointments["data"]:
+        return False
+    else:
+        return True
 
 
 def save_user_to_db(update, context):
@@ -89,34 +127,33 @@ def message_response(update, contex):
     user = client.query(q.get(q.match(q.index("users"), chat_id)))
     # till now we have our user now lets check its previous command.
     last_command = user["data"]["last_command"]
+
     # code blocks to book appointment
     if last_command == keys.getAppointmentTitle:
         reset_appointment()
         set_appointment('title', user_message)
-        # in below function we are just changing up last command for the user to get date.
         commandHandlers.get_appointment_start_date_handler(update, contex)
-        return "Please enter date of the appointment\nExample: 20/02/2021\nTo cancel booking use /cancel "
-    if last_command == keys.getAppointmentDate:
-        set_appointment('date', user_message)
-        # in below function we are just changing up last command for the user to get date.
-        commandHandlers.get_appointment_end_date_handler(update, contex)
-        return "Now please enter time of the appointment\nExample: 2:00pm,3:00pm\nTo cancel booking use /cancel "
-    if last_command == keys.getAppointmentTime:
-        set_appointment('time', user_message)
-        # in below function we are just changing up last command for the user to get date.
-        commandHandlers.submit_appointment_handler(update, contex, appointmentData)
-        # reset appointments data
-        reset_appointment()
-        return "Thanks for the information.\nUse this command to list your appointments: /"+keys.getMyAppointment
+        send_calendar(update, contex)
+        return
 
-    # now look for ordinary messages
+        # now look for ordinary messages
     user_message = str(user_message).lower()
     if user_message in ('hello', 'hi', 'sup'):
-        return "Hey! How's it going?"
+        msg = "Hey! How's it going?"
+        update.message.reply_text(msg)
+        return
+
     if user_message in ('who are you', 'who are you?', 'who is there'):
-        return "Hello im Axios Bot how can i help you?"
+        msg = "Hello im Axios Bot how can i help you?"
+        update.message.reply_text(msg)
+        return
+
     if user_message in ('time', "appointment"):
         now = datetime.now()
         date = now.strftime("%d%m%y, %H:%M:%S")
-        return date
-    return "i don't understand you!"
+        msg = date
+        update.message.reply_text(msg)
+        return
+
+    msg = "i don't understand you!"
+    update.message.reply_text(msg)
