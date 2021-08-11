@@ -59,6 +59,7 @@ slot_markup_again = InlineKeyboardMarkup(slot_options_again)
 
 
 def start_command(update, contex):
+    chat_id = update.effective_chat.id
     keyboard = [
         [InlineKeyboardButton(keys.Appointment, callback_data=keys.Appointment_)],
         [
@@ -68,6 +69,7 @@ def start_command(update, contex):
     ]
     reply_markup = InlineKeyboardMarkup(keyboard)
     R.save_user_to_db(update, contex)
+    contex.bot.send_photo(chat_id, photo=open('axios.png', 'rb'))
     update.message.reply_text("Select option:", reply_markup=reply_markup)
 
 
